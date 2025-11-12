@@ -9,6 +9,7 @@ jobs:
   push_to_replicate:
     name: Push to Replicate
     runs-on: ubuntu-latest
+
     steps:
       - name: Free disk space
         uses: jlumbroso/free-disk-space@v1.3.1
@@ -16,13 +17,20 @@ jobs:
           tool-cache: false
           docker-images: false
 
-      - name: Checkout
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup Cog
+      - name: Set up Cog
         uses: replicate/setup-cog@v2
         with:
-          token: ${{ secrets.REPLICATE_CLI_AUTH_TOKEN }}
+          token: ${{ secrets.REPLICATE_API_TOKEN }}
 
       - name: Push to Replicate
-        run: cog push r8.im/tony0587/flux-lora
+        env:
+          REPLICATE_API_TOKEN: ${{ secrets.REPLICATE_API_TOKEN }}
+          HUGGINGFACE_TOKEN: ${{ secrets.HUGGINGFACE_TOKEN }}
+        run: |
+          echo "Authenticating with Hugging Face..."
+          echo "$HUGGINGFACE_TOKEN" | huggingface-cli login --token
+          echo "Pushing model to Replicate..."
+          cog push r8.im/tony0587/flux-lora
