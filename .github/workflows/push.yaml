@@ -9,6 +9,7 @@ jobs:
   push_to_replicate:
     name: Push to Replicate
     runs-on: ubuntu-latest
+
     steps:
       - name: Free disk space
         uses: jlumbroso/free-disk-space@v1.3.1
@@ -19,15 +20,16 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Cog
-        uses: replicate/setup-cog@v2
+      - name: Setup Python
+        uses: actions/setup-python@v5
         with:
-          token: ${{ secrets.REPLICATE_CLI_AUTH_TOKEN }}
+          python-version: "3.10"
 
       - name: Install Hugging Face CLI
         run: |
-          pip install --upgrade pip
-          pip install huggingface_hub
+          python -m pip install --upgrade pip
+          pip install huggingface_hub[cli]
+          huggingface-cli --version
 
       - name: Authenticate with Hugging Face
         env:
@@ -35,7 +37,12 @@ jobs:
         run: |
           echo "Authenticating with Hugging Face..."
           echo "$HUGGINGFACE_TOKEN" | huggingface-cli login --token
-          
+
+      - name: Setup Cog
+        uses: replicate/setup-cog@v2
+        with:
+          token: ${{ secrets.REPLICATE_CLI_AUTH_TOKEN }}
+
       - name: Push to Replicate
         run: |
           echo "Pushing model to Replicate..."
