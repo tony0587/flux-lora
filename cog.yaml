@@ -1,0 +1,21 @@
+# Configuration for Cog ⚙️
+# Reference: https://cog.run/yaml
+image: r8.im/tony0587/flux-lora
+
+build:
+  # Flux models require a GPU (they use torch + diffusers)
+  gpu: true
+
+  # Some system dependencies needed by diffusers/torch for image processing
+  system_packages:
+    - "libgl1-mesa-glx"
+    - "libglib2.0-0"
+
+  # Recommended Python version
+  python_version: "3.10"
+
+  # Install all Python dependencies
+  python_requirements: requirements.txt
+
+# Entry point for Cog to run predictions
+predict: "predict.py:Predictor"
