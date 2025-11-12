@@ -1,25 +1,23 @@
 # predict.py
-# Cog prediction interface for a Flux + LoRA image generation model
-# https://github.com/replicate/cog
-
 from cog import BasePredictor, Input, Path
 import torch
-from diffusers import DiffusionPipeline
+from diffusers import FluxPipeline
 from pathlib import Path as SysPath
-
 
 class Predictor(BasePredictor):
     def setup(self):
-        """Load base Flux model and apply LoRA weights once when container starts."""
+        """Load base Flux model from Hugging Face and apply LoRA weights."""
         print("Loading base model...")
-        self.pipe = DiffusionPipeline.from_pretrained(
-            "black-forest-labs/flux-dev",
-            torch_dtype=torch.float16,
-            variant="fp16",
+        self.pipe = FluxPipeline.from_pretrained(
+            "black-forest-labs/FLUX.1-dev",  # Change this to the HF model you want
+            torch_dtype=torch.bfloat16      # or torch.float16 if you prefer
         )
 
-        # Load LoRA weights from your model path
-        lora_path = SysPath("models/mymodel.safetensors")
+        # Optional: Offload model to CPU if GPU is limited
+        self.pipe.enable_model_cpu_offload()
+
+        # Load LoRA weights
+        lora_path = SysPath("models/penis_worship_flux.safetensors")
         print(f"Loading LoRA weights from: {lora_path}")
         self.pipe.load_lora_weights(lora_path)
 
@@ -34,23 +32,17 @@ class Predictor(BasePredictor):
     def predict(
         self,
         prompt: str = Input(description="Prompt to generate image from"),
-        negative_prompt: str = Input(
-            description="Negative prompt to avoid unwanted results", default=""
-        ),
-        steps: int = Input(
-            description="Number of diffusion steps", ge=1, le=50, default=30
-        ),
-        guidance_scale: float = Input(
-            description="How closely to follow the prompt", ge=1, le=15, default=7.5
-        ),
+        negative_prompt: str = Input(description="Negative prompt to avoid unwanted results", default=""),
+        steps: int = Input(description="Number of diffusion steps", ge=1, le=50, default=30),
+        guidance_scale: float = Input(description="How closely to follow the prompt", ge=1, le=15, default=7.5),
         width: int = Input(description="Image width", ge=256, le=1024, default=512),
         height: int = Input(description="Image height", ge=256, le=1024, default=512),
         seed: int = Input(description="Random seed (for reproducibility)", default=42),
     ) -> Path:
-        """Run image generation and return the generated image."""
+        """Generate image using Flux + LoRA"""
         generator = torch.Generator(device=self.pipe.device).manual_seed(seed)
-
         print(f"Generating image for prompt: {prompt}")
+
         image = self.pipe(
             prompt=prompt,
             negative_prompt=negative_prompt,
@@ -58,7 +50,7 @@ class Predictor(BasePredictor):
             guidance_scale=guidance_scale,
             width=width,
             height=height,
-            generator=generator,
+            generator=generator
         ).images[0]
 
         output_path = Path("output.png")
