@@ -1,11 +1,9 @@
 name: Push to Replicate
 
 on:
-  workflow_dispatch:
-    inputs:
-      model_name:
-        description: 'Enter the model name, like "tony0587/flux-lora"'
-        required: true
+  push:
+    branches:
+      - main
 
 jobs:
   push_to_replicate:
@@ -18,7 +16,7 @@ jobs:
           tool-cache: false
           docker-images: false
 
-      - name: Checkout repository
+      - name: Checkout
         uses: actions/checkout@v4
 
       - name: Setup Cog
@@ -27,4 +25,4 @@ jobs:
           token: ${{ secrets.REPLICATE_CLI_AUTH_TOKEN }}
 
       - name: Push to Replicate
-        run: cog push r8.im/${{ inputs.model_name }}
+        run: cog push r8.im/tony0587/flux-lora
