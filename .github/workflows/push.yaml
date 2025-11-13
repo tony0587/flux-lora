@@ -25,19 +25,7 @@ jobs:
         with:
           token: ${{ secrets.REPLICATE_CLI_AUTH_TOKEN }}
 
-      - name: Verify secrets
-        run: |
-          echo "Checking if Hugging Face token is available..."
-          if [ -z "${{ secrets.HUGGING_FACE_HUB_TOKEN }}" ]; then
-            echo "❌ Missing HUGGING_FACE_HUB_TOKEN secret"
-            exit 1
-          else
-            echo "✅ Hugging Face token found"
-          fi
-
       - name: Push to Replicate
-        env:
-          HUGGING_FACE_HUB_TOKEN: ${{ secrets.HUGGING_FACE_HUB_TOKEN }}
         run: |
-          echo "🚀 Starting push to Replicate..."
+          echo "🚀 Pushing model to Replicate..."
           cog push r8.im/tony0587/flux-lora

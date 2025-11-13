@@ -1,32 +1,40 @@
 import os
-from cog import BasePredictor, Input, Path
+from cog import BasePredictor, Input, Path, Secret
 from huggingface_hub import InferenceClient
 
 class Predictor(BasePredictor):
     def setup(self):
         """Setup runs once when the container starts."""
-        token = os.environ.get("HUGGING_FACE_HUB_TOKEN")
-        if not token:
-            raise ValueError("Missing Hugging Face token! Add HUGGING_FACE_HUB_TOKEN in your secrets.")
-
-        # Initialize Hugging Face Inference client
-        self.client = InferenceClient(
-            model="black-forest-labs/FLUX.1-dev",
-            token=token,
-        )
-        print("✅ Connected to Hugging Face FLUX.1-dev model")
+        print("✅ Predictor initialized")
 
     def predict(
         self,
         prompt: str = Input(description="Prompt to generate an image from"),
+        hf_token: Secret = Input(description="Your Hugging Face access token (required for gated models)"),
+        width: int = Input(description="Width of the generated image", default=1024, ge=256, le=2048),
+        height: int = Input(description="Height of the generated image", default=1024, ge=256, le=2048),
     ) -> Path:
         """Generate an image from the given text prompt."""
-        print(f"🧠 Generating image for: {prompt}")
+
+        token = hf_token.get_secret_value()
+        print("🔐 Using Hugging Face token to authenticate...")
+
+        # Initialize the Hugging Face client with the token
+        client = InferenceClient(
+            model="black-forest-labs/FLUX.1-dev",
+            token=token,
+        )
+
+        print(f"🧠 Generating image for prompt: {prompt}")
 
         # Run inference
-        image = self.client.text_to_image(prompt)
+        image = client.text_to_image(
+            prompt=prompt,
+            width=width,
+            height=height
+        )
 
-        # Save the result to output path
+        # Save output
         output_path = Path("output.png")
         image.save(output_path)
 
